@@ -19,3 +19,12 @@ An object-aware cartoonization method
    ```
 
 4. Download pre-trained weights inside the root directory from [here](https://github.com/matterport/Mask_RCNN/releases/download/v2.0/mask_rcnn_coco.h5)
+
+## Usage
+
+Use `detect.py` to perform object detection. To run a custom image,
+please supply an image path as argument like the example shown below:
+
+```bash
+python detect.py ./samples/default.jpg
+```
