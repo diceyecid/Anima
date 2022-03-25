@@ -1,6 +1,6 @@
-# Anima
+# Object-Aware Cartoonization
 
-An object-aware cartoonization method
+An object-aware cartoonization method using CartoonGAN and Mask R-CNN.
 
 ## Installation
 
