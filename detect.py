@@ -1,6 +1,7 @@
 import cv2
 import os
 import sys
+import glob
 import mrcnn.config as mConfig
 import mrcnn.model as mModel
 import mrcnn.visualize as mVisualize
@@ -23,6 +24,9 @@ CLASS_NAMES = [
         'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors',
         'teddy bear', 'hair drier', 'toothbrush' 
         ]
+
+# valid inputs
+VALID_EXTENSIONS = [ 'jpg', 'jpeg', 'png' ]
 
 # custom configuration
 class InferenceConfig( mConfig.Config ):
@@ -66,7 +70,7 @@ def main( image ):
 if __name__ == '__main__':
     # if image is not supplied, read default image
     if len( sys.argv ) < 2:
-        image = cv2.imread( './samples/default.jpg' )
+        image = cv2.imread( './input/default.jpg' )
 
     # otherwise read supplied image
     else:
@@ -74,7 +78,7 @@ if __name__ == '__main__':
 
         # if supplied image does not exist, print error and finish execution
         if image is None:
-            print( 'Image does not exist in samples folder' )
+            print( 'Image does not exist' )
             sys.exit( 1 )
 
     # convert image to RGB channel

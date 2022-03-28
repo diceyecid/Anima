@@ -1,5 +1,6 @@
-# Data files
+# Data and output files
 *.h5
+output/
 
 # macOS system file
 .DS_Store

@@ -22,9 +22,46 @@ An object-aware cartoonization method
 
 ## Usage
 
+### Object Detection
+
 Use `detect.py` to perform object detection. To run a custom image,
 please supply an image path as argument like the example shown below:
 
 ```bash
-python detect.py ./samples/default.jpg
+python detect.py ./input/default.jpg
 ```
+
+### Cartoonization
+
+Use `cartoonize.py` to perform image cartoonization. By default, it will apply
+`shinkai` style transfer on images from `input` directory, the cartoonized images
+will be placed in `output` directory.
+
+There are 4 styles available with CartoonGAN:
+
+- `shinkai`
+- `hayao`
+- `hosoda`
+- `paprika`
+
+There are many customization options available. As an example, the following
+command specified input and output directories and styles:
+
+```bash
+python cartoonize.py \
+	--input_dir input \
+	--output_dir output \
+	--styles shinkai hayao
+```
+
+To explore all available customization options, please use the following command
+to get detailed explainations:
+
+```bash
+python cartoonize.py --help
+```
+
+## Acknowledgement
+
+- [Mask R-CNN for Object Detection and Segmentation using TensorFlow 2.0](https://github.com/ahmedfgad/Mask-RCNN-TF2)
+- [CartoonGAN-TensorFlow2](https://github.com/mnicnc404/CartoonGan-tensorflow)
