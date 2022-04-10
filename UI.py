@@ -103,7 +103,9 @@ class PhotoCtrl(wx.App):
     
     def onRun(self, event):
         # script name start
-        os.system('python3 Desktop/git/Object-Aware-Cartoonization/cartoonize.py')
+        dirname = os.path.dirname(__file__)
+        file = os.path.join(dirname, 'cartoonize.py')
+        os.system('python3 ' + file)
 
     def onChoice(self,event): 
         self.label.SetLabel("selected "+ self.choice.
@@ -127,7 +129,7 @@ class PhotoCtrl(wx.App):
             NewH = PhotoMaxSize
             NewW = PhotoMaxSize * W / H
         img = img.Scale(NewW,NewH)
-
+        print(1)
         self.imageCtrl.SetBitmap(wx.Bitmap(img))
         self.panel.Refresh()
 
