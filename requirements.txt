@@ -13,3 +13,4 @@ tqdm
 imageio
 tb-nightly
 IPython[all]
+wxpython
