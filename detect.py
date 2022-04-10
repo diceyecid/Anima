@@ -2,6 +2,7 @@ import cv2
 import os
 import sys
 import glob
+import numpy as np
 import mrcnn.config as mConfig
 import mrcnn.model as mModel
 import mrcnn.visualize as mVisualize
@@ -35,8 +36,37 @@ class InferenceConfig( mConfig.Config ):
     IMAGES_PER_GPU = 1
     NUM_CLASSES = len( CLASS_NAMES )
 
+# resolve image path and return image
+def getImage( path = None ):
+    # if it is called from command line, read path from system argument
+    if( path == None ):
+        # if image is not supplied, read default image
+        if( len( sys.argv ) < 2 ):
+            image = cv2.imread( './input/default.jpg' )
+
+        # otherwise read supplied image
+        else:
+            image = cv2.imread( sys.argv[1] )
+
+    # otherwise read path from suppied argument
+    else:
+        image = cv2.imread( path )
+
+    # if supplied image does not exist, print error and finish execution
+    if image is None:
+        print( 'Image does not exist' )
+        sys.exit( 1 )
+
+    # convert image to RGB channel
+    image = cv2.cvtColor( image, cv2.COLOR_BGR2RGB )
+
+    return image
+
 # main execution
-def main( image ):
+def detect( imagePath = None ):
+    # get image 
+    image = getImage( imagePath )
+
     # initilize configuration and display it
     config = InferenceConfig()
 
@@ -66,23 +96,10 @@ def main( image ):
             scores = r['scores'] 
             )
 
-# call enterance
+    # save results
+    # np.save( 'test.npy', r )
+    return r
+
+# runtime enterance
 if __name__ == '__main__':
-    # if image is not supplied, read default image
-    if len( sys.argv ) < 2:
-        image = cv2.imread( './input/default.jpg' )
-
-    # otherwise read supplied image
-    else:
-        image = cv2.imread( sys.argv[1] )
-
-        # if supplied image does not exist, print error and finish execution
-        if image is None:
-            print( 'Image does not exist' )
-            sys.exit( 1 )
-
-    # convert image to RGB channel
-    image = cv2.cvtColor( image, cv2.COLOR_BGR2RGB )
-    main( image )
-
-
+    detect()
