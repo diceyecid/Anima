@@ -419,7 +419,7 @@ def cartoonize( image_path, funArgs = {} ):
 
         # cartoonize
         for model, style in zip(models, styles):
-            return_existing_result = result_exist(image_path, style) or args.overwrite
+            return_existing_result = result_exist(image_path, style) or not args.overwrite
 
             transformed_png_paths = transform_png_images(png_paths, model, style,
                     return_existing_result=return_existing_result)
