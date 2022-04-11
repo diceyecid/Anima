@@ -51,10 +51,10 @@ class Input(wx.Frame):
 
         instructLbl = wx.StaticText(self.panel, label=instructions)
         instructLbl.SetFont(subFont)
-
-        choices = ['1', '2', '3', '4'] 
-        choice = wx.Choice(self.panel,choices = choices)
-        choice.Bind(wx.EVT_CHOICE, self.onChoice)
+        self.style = 'shinkai'
+        choices = ['shinkai', 'hayao', 'hosoda', 'paprika'] 
+        self.choice = wx.Choice(self.panel,choices = choices)
+        self.choice.Bind(wx.EVT_CHOICE, self.onChoice)
 
 
         self.photoTxt = wx.TextCtrl(self.panel, size=(300,-1))
@@ -71,7 +71,7 @@ class Input(wx.Frame):
 
         self.output = wx.BoxSizer(wx.VERTICAL)
         self.mainSizer.Add(lbl, 0, wx.CENTER, 5)
-        self.mainSizer.Add(choice, 0, wx.CENTER, 5)
+        self.mainSizer.Add(self.choice, 0, wx.CENTER, 5)
         self.mainSizer.Add(wx.StaticLine(self.panel, wx.ID_ANY),
                            0, wx.ALL|wx.EXPAND, 5)
         self.mainSizer.Add(instructLbl, 0, wx.ALL, 5)
@@ -111,12 +111,18 @@ class Input(wx.Frame):
         # file = os.path.join(dirname, 'cartoonize.py')
         # os.system('python3 ' + file)
         pub.sendMessage("state", message = 'output')
+        #print(self.pathDir)
+        
+        os.system('python3 driver.py --input ' + self.pathDir + ' --styles ' + self.style)
+        pub.sendMessage("path", message = self.pathDir, arg2 = self.style)
         self.frame.Close()
 
 
     def onChoice(self,event): 
-        self.label.SetLabel("selected "+ self.choice.
-        GetString( self.choice.GetSelection() ) +" from Choice")
+        # self.label.SetLabel("selected "+ self.choice.
+        # GetString( self.choice.GetSelection() ) +" from Choice")
+        self.style = self.choice.GetString( self.choice.GetSelection())
+        print(self.style)
 
     def update_image_on_dnd(self, filepath):
         self.on_view(filepath=filepath)
@@ -124,8 +130,9 @@ class Input(wx.Frame):
     def on_view(self, filepath=None):
         if not filepath:
             filepath = self.photoTxt.GetValue()
-            
+        
         img = wx.Image(filepath, wx.BITMAP_TYPE_ANY)
+        self.pathDir = filepath
         # scale the image, preserving the aspect ratio
         W = img.GetWidth()
         H = img.GetHeight()
@@ -145,10 +152,9 @@ class Input(wx.Frame):
 class Output(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self)
-        self.frame = wx.Frame(None, title='Anima', size = (1200, 600))
+        self.frame = wx.Frame(None, title='Anima', size = (1600, 800))
 
-        dirname = os.path.dirname(__file__)
-        imgLoc = os.path.join(dirname, 'input/default.jpg')
+
 
         self.panel = wx.Panel(self.frame)
         self.panel.SetBackgroundColour(wx.Colour(233,243,255,255))
@@ -165,31 +171,37 @@ class Output(wx.Frame):
         lbl.SetFont(font) 
         lbl.SetLabel(title) 
 
-        
-        dirname = os.path.dirname(__file__)
-        self.imgLoc = os.path.join(dirname, 'input/default.jpg')
-        self.img = wx.Image(self.imgLoc, wx.BITMAP_TYPE_ANY)
+    
 
         # self.slider = wx.Slider(self.panel, -1, 99, 1, 99, size = (self.img.GetWidth(), 40))
         # self.Bind(wx.EVT_SLIDER, self.sliderUpdate)
+        pub.subscribe(self.getMessage, "path")
+        # self.location = 'input/place.jpg'
+        # self.style = 'shinkai'
 
-        self.perc = 0.99
 
-        self.w = self.img.GetWidth()
-        self.h = self.img.GetHeight()
 
-        imgBefore = self.img.Resize(size = (self.w, self.h), pos = (0,0))
-        self.before = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgBefore), pos = ((1200 - self.w * 2)/2, 200))
-        self.before.SetBitmap(wx.Bitmap(imgBefore))
-        #self.before.SetPosition(100, 100)
+        # imgbef = wx.Image(self.location, wx.BITMAP_TYPE_ANY)
+        # W = imgbef.GetWidth()
+        # H = imgbef.GetHeight()
+        # if W > H:
+        #     NewW = PhotoMaxSize
+        #     NewH = PhotoMaxSize * H / W
+        # else:
+        #     NewH = PhotoMaxSize
+        #     NewW = PhotoMaxSize * W / H
+        # imgbef = imgbef.Scale(NewW,NewH)
+        # self.before = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgbef), pos = ((1600 - imgbef.GetWidth() * 2)/2, 200))
+        # self.before.SetBitmap(wx.Bitmap(imgbef))
+        # #self.before.SetPosition(100, 100)
 
-        imgAfter = wx.Image(self.imgLoc, wx.BITMAP_TYPE_ANY)
-        imgAfter = imgAfter.Mirror(horizontally=True)
-        imgAfter = imgAfter.Resize(size = (self.w, self.h), pos = (0,0))
-        imgAfter = imgAfter.Mirror(horizontally=True)
-        self.after = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgAfter), pos = ((1200 - self.w * 2)/2 + self.w + 20, 200))
-
-        self.after.SetBitmap(wx.Bitmap(imgAfter))
+        # filename = self.location.split(os.path.sep)[-1]
+        # print(filename)
+        # afterLocation = 'output/'+ self.style + '/adaptive/' + filename
+        # imgAfter = wx.Image(afterLocation, wx.BITMAP_TYPE_ANY)
+        # imgAfter = imgAfter.Scale(NewW, NewH)
+        # self.after = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgAfter), pos = ((1600 - imgbef.GetWidth() * 2)/2 + imgbef.GetWidth() + 20, 200))
+        # self.after.SetBitmap(wx.Bitmap(imgAfter))
 
         reset = wx.Button(self.panel, label = 'Reset')
         reset.Bind(wx.EVT_BUTTON, self.OnReset)
@@ -201,8 +213,8 @@ class Output(wx.Frame):
         self.mainSizer.Add(wx.StaticLine(self.panel, wx.ID_ANY),
                            0, wx.ALL|wx.EXPAND, 5)
 
-        self.sizer.Add(self.before, 0, wx.LEFT|wx.RIGHT, 0)
-        self.sizer.Add(self.after, 0, wx.LEFT|wx.RIGHT, 0)
+        #self.sizer.Add(self.before, 0, wx.LEFT|wx.RIGHT, 0)
+        #self.sizer.Add(self.after, 0, wx.LEFT|wx.RIGHT, 0)
         self.mainSizer.Add(self.sizer, 0, wx.CENTER, 5)
         self.mainSizer.Add(reset, 0, wx.CENTER|wx.TOP, 20)
         # self.mainSizer.Add(self.slider, 0, wx.CENTER|wx.TOP, 20)
@@ -214,31 +226,59 @@ class Output(wx.Frame):
 
         self.panel.Layout()
 
-    def sliderUpdate(self, event):
-        pos = self.slider.GetValue()
-        pub.sendMessage("state", message = 'output')
-        self.perc = pos /100
-        print(1)
-        imgBefore = wx.Image(self.imgLoc, wx.BITMAP_TYPE_ANY)
-        imgBefore = imgBefore.Resize(size = (int(self.w * self.perc), self.h), pos = (0,0))
-        self.before = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgBefore), pos = ((1200 - self.w)/2, 200))
-        self.before.SetBitmap(wx.Bitmap(imgBefore))
+    # def sliderUpdate(self, event):
+        # pos = self.slider.GetValue()
+        # pub.sendMessage("state", message = 'output')
+        # self.perc = pos /100
+        # print(1)
+        # imgBefore = wx.Image(self.imgLoc, wx.BITMAP_TYPE_ANY)
+        # imgBefore = imgBefore.Resize(size = (int(self.w * self.perc), self.h), pos = (0,0))
+        # self.before = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgBefore), pos = ((1200 - self.w)/2, 200))
+        # self.before.SetBitmap(wx.Bitmap(imgBefore))
 
-        imgAfter = wx.Image(self.imgLoc, wx.BITMAP_TYPE_ANY)
-        imgAfter = imgAfter.Mirror(horizontally=True)
-        imgAfter = imgAfter.Resize(size = (int(self.w * (1 - self.perc)), self.h), pos = (0,0))
-        imgAfter = imgAfter.Mirror(horizontally=True)
-        self.after = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgAfter), pos = ((1200 - self.w)/2 + int(self.w * self.perc) + 100, 200))
-        # afterImg = afterImg.Mirror(horizontally=True)
-        self.after.SetBitmap(wx.Bitmap(imgAfter))
+        # imgAfter = wx.Image(self.imgLoc, wx.BITMAP_TYPE_ANY)
+        # imgAfter = imgAfter.Mirror(horizontally=True)
+        # imgAfter = imgAfter.Resize(size = (int(self.w * (1 - self.perc)), self.h), pos = (0,0))
+        # imgAfter = imgAfter.Mirror(horizontally=True)
+        # self.after = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgAfter), pos = ((1200 - self.w)/2 + int(self.w * self.perc) + 100, 200))
+        # # afterImg = afterImg.Mirror(horizontally=True)
+        # self.after.SetBitmap(wx.Bitmap(imgAfter))
         # self.sizer.Clear()
         # self.sizer.Add(self.before, 0, wx.CENTER, 0)
         # self.sizer.Add(self.after, 0, wx.CENTER, 0)
-        self.panel.Refresh()
+        # self.panel.Refresh()
 
     def OnReset(self, event):
         pub.sendMessage("state", message = 'input')
         self.frame.Close()
+
+    def getMessage(self, message, arg2=None):
+        self.location = message
+        if arg2:
+            self.style = arg2
+        else:
+            self.style = shinkai
+
+        imgbef = wx.Image(self.location, wx.BITMAP_TYPE_ANY)
+        W = imgbef.GetWidth()
+        H = imgbef.GetHeight()
+        if W > H:
+            NewW = PhotoMaxSize
+            NewH = PhotoMaxSize * H / W
+        else:
+            NewH = PhotoMaxSize
+            NewW = PhotoMaxSize * W / H
+        imgbef = imgbef.Scale(NewW,NewH)
+        self.before = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgbef), pos = ((1600 - imgbef.GetWidth() * 2)/2, 150))
+        self.before.SetBitmap(wx.Bitmap(imgbef))
+
+        filename = self.location.split(os.path.sep)[-1]
+        afterLocation = 'output/'+ self.style + '/adaptive/' + filename
+        imgAfter = wx.Image(afterLocation, wx.BITMAP_TYPE_ANY)
+        imgAfter = imgAfter.Scale(NewW, NewH)
+        self.after = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgAfter), pos = ((1600 - imgbef.GetWidth() * 2)/2 + imgbef.GetWidth() + 20, 150))
+        self.after.SetBitmap(wx.Bitmap(imgAfter))
+        self.panel.Refresh()
         
 
 
@@ -259,7 +299,6 @@ class controller(wx.App):
         #     print(pub.subscribe(Input().printMsg, 'state'))
 	
     def getMSG(self, message):
-        print(123)
         if message == "input":
             self.frame = Input()
         else:
