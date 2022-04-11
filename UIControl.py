@@ -170,24 +170,24 @@ class Output(wx.Frame):
         self.imgLoc = os.path.join(dirname, 'input/default.jpg')
         self.img = wx.Image(self.imgLoc, wx.BITMAP_TYPE_ANY)
 
-        self.slider = wx.Slider(self.panel, -1, 99, 1, 99, size = (self.img.GetWidth(), 40))
-        self.Bind(wx.EVT_SLIDER, self.sliderUpdate)
+        # self.slider = wx.Slider(self.panel, -1, 99, 1, 99, size = (self.img.GetWidth(), 40))
+        # self.Bind(wx.EVT_SLIDER, self.sliderUpdate)
 
         self.perc = 0.99
 
         self.w = self.img.GetWidth()
         self.h = self.img.GetHeight()
 
-        imgBefore = self.img.Resize(size = (int(self.w * self.perc), self.h), pos = (0,0))
-        self.before = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgBefore), pos = ((1200 - self.w)/2, 200))
+        imgBefore = self.img.Resize(size = (self.w, self.h), pos = (0,0))
+        self.before = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgBefore), pos = ((1200 - self.w * 2)/2, 200))
         self.before.SetBitmap(wx.Bitmap(imgBefore))
         #self.before.SetPosition(100, 100)
 
         imgAfter = wx.Image(self.imgLoc, wx.BITMAP_TYPE_ANY)
         imgAfter = imgAfter.Mirror(horizontally=True)
-        imgAfter = imgAfter.Resize(size = (int(self.w * (1 - self.perc)), self.h), pos = (0,0))
+        imgAfter = imgAfter.Resize(size = (self.w, self.h), pos = (0,0))
         imgAfter = imgAfter.Mirror(horizontally=True)
-        self.after = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgAfter), pos = ((1200 - self.w)/2 + int(self.w * self.perc) + 100, 200))
+        self.after = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgAfter), pos = ((1200 - self.w * 2)/2 + self.w + 20, 200))
 
         self.after.SetBitmap(wx.Bitmap(imgAfter))
 
@@ -201,10 +201,11 @@ class Output(wx.Frame):
         self.mainSizer.Add(wx.StaticLine(self.panel, wx.ID_ANY),
                            0, wx.ALL|wx.EXPAND, 5)
 
-        # self.sizer.Add(self.before, 0, wx.LEFT|wx.RIGHT, 0)
-        # self.sizer.Add(self.after, 0, wx.LEFT|wx.RIGHT, 0)
+        self.sizer.Add(self.before, 0, wx.LEFT|wx.RIGHT, 0)
+        self.sizer.Add(self.after, 0, wx.LEFT|wx.RIGHT, 0)
         self.mainSizer.Add(self.sizer, 0, wx.CENTER, 5)
-        self.mainSizer.Add(self.slider, 0, wx.CENTER|wx.TOP, 20)
+        self.mainSizer.Add(reset, 0, wx.CENTER|wx.TOP, 20)
+        # self.mainSizer.Add(self.slider, 0, wx.CENTER|wx.TOP, 20)
 
 
         self.panel.SetSizer(self.mainSizer)
