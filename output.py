@@ -25,8 +25,6 @@ class PhotoCtrl(wx.App):
 
     def createWidgets(self):
 
-        
-
         title = "Anima" 
         lbl = wx.StaticText(self.panel,-1,style = wx.ALIGN_CENTER) 
         font = wx.Font(48, wx.FONTFAMILY_MODERN, wx.NORMAL, wx.NORMAL)
@@ -60,7 +58,8 @@ class PhotoCtrl(wx.App):
 
         self.after.SetBitmap(wx.Bitmap(imgAfter))
 
-        
+        reset = wx.Button(self.panel, label = 'Reset')
+        reset.Bind(wx.EVT_BUTTON, self.OnReset)
 
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -84,6 +83,7 @@ class PhotoCtrl(wx.App):
     def sliderUpdate(self, event):
         pos = self.slider.GetValue()
         self.perc = pos /100
+        print(self.perc)
         imgBefore = wx.Image(self.imgLoc, wx.BITMAP_TYPE_ANY)
         imgBefore = imgBefore.Resize(size = (int(self.w * self.perc), self.h), pos = (0,0))
         self.before = SB.GenStaticBitmap(self.panel, wx.ID_ANY, wx.Bitmap(imgBefore), pos = ((1200 - self.w)/2, 200))
@@ -101,6 +101,13 @@ class PhotoCtrl(wx.App):
         # self.sizer.Add(self.after, 0, wx.CENTER, 0)
 
         self.panel.Refresh()
+
+    def OnReset(self, event):
+        self.frame.Hide()
+        # dirname = os.path.dirname(__file__)
+        # file = os.path.join(dirname, 'UI.py')
+        # os.system('python3 ' + file)
+
 
 
         
