@@ -163,6 +163,7 @@ def detect( imagePath, outputDir, ignoreGIF = False ):
         # find pngs from temporary folder
         pngPaths = []
         pngPaths.extend( glob.glob( os.path.join( pngDir, f"*.png" ) ) )
+        pngPaths = sorted( pngPaths, key=lambda x: int(x.split('/')[-1].replace('.png', '')) )
         num_images = len( pngPaths )
 
         # detect objects

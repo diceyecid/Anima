@@ -157,11 +157,13 @@ def enhance( imagePath, outputDir, edges, styles ):
             # find cartoons from temporary folder
             cartoonPaths = []
             cartoonPaths.extend( glob.glob( os.path.join( pngDir, style, f"*.png" ) ) )
+            cartoonPaths = sorted( cartoonPaths, key=lambda x: int(x.split('/')[-1].replace('.png', '')) )
             num_images = len( cartoonPaths )
 
             # find objects from temporary folder
             objPaths = []
             objPaths.extend( glob.glob( os.path.join( pngDir, "objects", f"*.npy" ) ) )
+            objPaths = sorted( objPaths, key=lambda x: int(x.split('/')[-1].replace('.npy', '')) )
         else:
             # find cartoons from cartoon folder
             cartoonPaths = [ os.path.join( outputDir, style, filename ) ]
