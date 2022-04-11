@@ -1,11 +1,30 @@
 import numpy as np
 import cv2
-import mrcnn.visualize as mVisualize
-import cartoonize
-from detect import detect
+import os
+import sys
+import glob
+import logging
+from detect import main as detect
+
 
 IMAGE_PATH = './input/nyc.png'
 CARTOON_PATH = './output/shinkai/nyc.png'
+EDGES = ['adaptive', 'canny', 'morph', 'original']
+
+
+# logger
+logger = logging.getLogger("Enhancer")
+logger.propagate = False
+log_lvl = {"debug": logging.DEBUG, "info": logging.INFO,
+           "warning": logging.WARNING, "error": logging.ERROR,
+           "critical": logging.CRITICAL}
+logger.setLevel( log_lvl['info'] )
+formatter = logging.Formatter(
+    "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S")
+stdhandler = logging.StreamHandler(sys.stdout)
+stdhandler.setFormatter(formatter)
+logger.addHandler(stdhandler)
+
 
 # get canny edges in each of the region of interest
 def getCannyEdge( objects, cartoon ):
@@ -40,6 +59,7 @@ def getCannyEdge( objects, cartoon ):
 
     return edges
 
+
 # get morphologic edge in each of the region of interest
 def getMorphEdge( objects, cartoon ):
     # pre-process
@@ -67,6 +87,7 @@ def getMorphEdge( objects, cartoon ):
 
     return edges
 
+
 # get adaptive edge in each of the region of interest
 def getAdaptiveEdge( objects, cartoon ):
     # pre-process
@@ -83,10 +104,10 @@ def getAdaptiveEdge( objects, cartoon ):
 
             # clip to the region
             region = grey[ roi[0] : roi[2], roi[1] : roi[3] ]
-            blur = cv2.medianBlur( grey, blurSize )
+            blur = cv2.medianBlur( region, blurSize )
 
             # threshold edges
-            edge = cv2.adaptiveThreshold( region, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, lineSize, blurSize )
+            edge = cv2.adaptiveThreshold( blur, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, lineSize, blurSize )
             edge = 255 - edge
             
             # place regional edge to the whole picture
@@ -95,8 +116,104 @@ def getAdaptiveEdge( objects, cartoon ):
     return edges
 
 
+# get edges and enhanced image base on method
+def getEdge( obj, cartoon, method ):
+    edgeImage, enhancedImage = None, None
+
+    if method == EDGES[0]:
+        edgeImage = getAdaptiveEdge( obj, cartoon )
+        enhancedImage = cv2.bitwise_and( cartoon, cartoon, mask = 255 - edgeImage )
+
+    elif method == EDGES[1]:
+        edgeImage = getCannyEdge( obj, cartoon )
+        enhancedImage = cv2.bitwise_and( cartoon, cartoon, mask = 255 - edgeImage )
+
+    elif method == EDGES[2]:
+        edgeImage = getMorphEdge( obj, cartoon )
+        enhancedImage = cv2.bitwise_and( cartoon, cartoon, mask = 255 - edgeImage )
+
+    elif method == EDGES[3]:
+        edgeImage = np.zeros( cartoon.shape[:2], np.uint8 )
+        enhancedImage = cartoon
+
+    return edgeImage, enhancedImage
+
+
 # enhance objects in cartoon image
-def enhance( objects, cartoon ):
+def enhance( imagePath, outputDir, edges, styles ):
+    logger.info( f'Retrieving images...' )
+
+    # get file name
+    filename = imagePath.split(os.path.sep)[-1]
+
+    # useful directory paths
+    tempDir = os.path.join( outputDir, '.tmp')
+    pngDir = os.path.join( tempDir, os.path.splitext( filename )[0] )
+
+    logger.info( f'Generating {edges} edges with {styles} styles...' )
+    for style in styles:
+        # find cartoon and objects based on image type
+        if filename.endswith( '.gif' ):
+            # find cartoons from temporary folder
+            cartoonPaths = []
+            cartoonPaths.extend( glob.glob( os.path.join( pngDir, style, f"*.png" ) ) )
+            num_images = len( cartoonPaths )
+
+            # find objects from temporary folder
+            objPaths = []
+            objPaths.extend( glob.glob( os.path.join( pngDir, "objects", f"*.npy" ) ) )
+        else:
+            # find cartoons from cartoon folder
+            cartoonPaths = [ os.path.join( outputDir, style, filename ) ]
+
+            # find objects from temporary folder
+            objPaths = [ os.path.join( pngDir, "objects", "0.npy" ) ]
+
+        # generate edges 
+        for e in edges:
+            logger.debug( f'Generating {e} edge with {style} style...' )
+            for i, ( cPath, oPath ) in enumerate( zip( cartoonPaths, objPaths ) ):
+                # get edges
+                cartoon = cv2.imread( cPath )
+                obj = np.load( oPath, allow_pickle = True )[()]
+                edgeImage, enhancedImage = getEdge( obj, cartoon, e )
+
+                # create directory and save edges
+                edgeDir = os.path.join( pngDir, style, e )
+                if not os.path.exists( edgeDir ):
+                    os.makedirs( edgeDir )
+                edgeFilename = f"{i + 1}.png"
+                cv2.imwrite( os.path.join( edgeDir, edgeFilename ), edgeImage )
+
+
+                # create directory and save enhanced image
+                if filename.endswith( '.gif' ):
+                    # save image to temporary folder
+                    enhancedDir = os.path.join( pngDir, style, e, 'enhanced' )
+                    if not os.path.exists( enhancedDir ):
+                        os.makedirs( enhancedDir )
+                    enhancedFilename = f"{i + 1}.png"
+                    cv2.imwrite( os.path.join( enhancedDir, enhancedFilename ), enhancedImage )
+                else:
+                    # save image to directly to desired output folder
+                    enhancedDir = os.path.join( outputDir, style, e )
+                    if not os.path.exists( enhancedDir ):
+                        os.makedirs( enhancedDir )
+                    enhancedFilename = filename
+                    cv2.imwrite( os.path.join( enhancedDir, enhancedFilename ), enhancedImage )
+
+    return
+
+
+
+def main():
+    objects = detect( IMAGE_PATH )
+    # r = np.load( 'test.npy', allow_pickle = True )[()]
+
+    image = cv2.imread( IMAGE_PATH )
+    cartoon = cv2.imread( CARTOON_PATH )
+    cartoon = cv2.resize( cartoon, image.shape[1::-1] )
+        
     # edges
     empty = np.ones( cartoon.shape[:2], np.uint8 )
     canny = getCannyEdge( objects, cartoon )
@@ -126,15 +243,6 @@ def enhance( objects, cartoon ):
     cv2.destroyAllWindows()
 
 
-def main():
-    objs = detect( IMAGE_PATH )
-    # r = np.load( 'test.npy', allow_pickle = True )[()]
-
-    image = cv2.imread( IMAGE_PATH )
-    cartoon = cv2.imread( CARTOON_PATH )
-    cartoon = cv2.resize( cartoon, image.shape[1::-1] )
-
-    cartoon = enhance( objs, cartoon )
 
 if __name__ == '__main__':
     main()

@@ -2,6 +2,7 @@ import cv2
 import os
 import sys
 import glob
+import logging
 import numpy as np
 import mrcnn.config as mConfig
 import mrcnn.model as mModel
@@ -26,8 +27,21 @@ CLASS_NAMES = [
         'teddy bear', 'hair drier', 'toothbrush' 
         ]
 
-# valid inputs
-VALID_EXTENSIONS = [ 'jpg', 'jpeg', 'png' ]
+VALID_EXTENSIONS = ['jpg', 'png', 'gif', 'JPG']
+
+# logger
+logger = logging.getLogger("Detector")
+logger.propagate = False
+log_lvl = {"debug": logging.DEBUG, "info": logging.INFO,
+           "warning": logging.WARNING, "error": logging.ERROR,
+           "critical": logging.CRITICAL}
+logger.setLevel( log_lvl['info'] )
+formatter = logging.Formatter(
+    "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s", "%Y-%m-%d %H:%M:%S")
+stdhandler = logging.StreamHandler(sys.stdout)
+stdhandler.setFormatter(formatter)
+logger.addHandler(stdhandler)
+
 
 # custom configuration
 class InferenceConfig( mConfig.Config ):
@@ -36,21 +50,21 @@ class InferenceConfig( mConfig.Config ):
     IMAGES_PER_GPU = 1
     NUM_CLASSES = len( CLASS_NAMES )
 
+
 # resolve image path and return image
 def getImage( path = None ):
     # if it is called from command line, read path from system argument
     if( path == None ):
         # if image is not supplied, read default image
         if( len( sys.argv ) < 2 ):
-            image = cv2.imread( './input/default.jpg' )
+            path = './input/default.jpg'
 
         # otherwise read supplied image
         else:
-            image = cv2.imread( sys.argv[1] )
+            path = sys.argv[1]
 
-    # otherwise read path from suppied argument
-    else:
-        image = cv2.imread( path )
+    # read image from path
+    image = cv2.imread( path )
 
     # if supplied image does not exist, print error and finish execution
     if image is None:
@@ -62,25 +76,11 @@ def getImage( path = None ):
 
     return image
 
-# main execution
-def detect( imagePath = None ):
-    # get image 
-    image = getImage( imagePath )
 
-    # initilize configuration and display it
-    config = InferenceConfig()
+# visualize results
+def visualize( image, result ):
+    r = result
 
-    # initialize Mask R-CNN model for inference
-    model = mModel.MaskRCNN( mode = 'inference', config = config, model_dir = os.getcwd() )
-
-    # load weight to model
-    model.load_weights( filepath = 'mask_rcnn_coco.h5', by_name = True )
-
-    # forward pass
-    res = model.detect( [ image ], verbose = 0 )
-    r = res[0]
-
-    # visualize results
     colHead = '%      class      at [ y1  x1  y2  x2]'
     print( colHead )
     print( '-' * len( colHead ) )
@@ -96,10 +96,103 @@ def detect( imagePath = None ):
             scores = r['scores'] 
             )
 
+    return
+
+# main execution
+def main( inputPath = None ):
+    # define lists to contain images and prediction results
+    images = []
+    results = []
+
+    # get image 
+    logger.info( f'Retrieving image from `inputPath`' )
+    images.append( getImage( inputPath ) )
+
+    # initilize configuration and display it
+    config = InferenceConfig()
+
+    # initialize Mask R-CNN model for inference
+    logger.info( f'Loading Mask R-CNN model...' )
+    model = mModel.MaskRCNN( mode = 'inference', config = config, model_dir = os.getcwd() )
+
+    # load weight to model
+    logger.info( f'Loading pretrained COCO weights...' )
+    model.load_weights( filepath = 'mask_rcnn_coco.h5', by_name = True )
+
+    # forward pass
+    for im in images:
+        res = model.detect( [ im ], verbose = 0 )
+        results.append( res[0] )
+
+    # visualize results
+    # for im, r in zip( images, results ):
+        # visualize( im, r )
+
     # save results
     # np.save( 'test.npy', r )
-    return r
+    return results
 
+
+def detect( imagePath, outputDir, ignoreGIF = False ):
+    # initilize configuration and display it
+    config = InferenceConfig()
+
+    # initialize Mask R-CNN model for inference
+    logger.info( f'Loading Mask R-CNN model...' )
+    model = mModel.MaskRCNN( mode = 'inference', config = config, model_dir = os.getcwd() )
+
+    # load weight to model
+    logger.info( f'Loading pretrained COCO weights...' )
+    model.load_weights( filepath = 'mask_rcnn_coco.h5', by_name = True )
+
+    # get file name
+    filename = imagePath.split(os.path.sep)[-1]
+    
+    # make a directory to for storing detected objects
+    tempDir = os.path.join( f'{outputDir}', '.tmp')
+    pngDir = os.path.join( tempDir, os.path.splitext( filename )[0] )
+    objDir = os.path.join( pngDir, 'objects' )
+    if not os.path.exists( objDir ):
+        logger.debug( f'Creating temporary folder: {objDir} for storing detected objects...' )
+        os.makedirs( objDir )
+
+    logger.info( f"Detecting objects in {filename}...." )
+
+    # transform gif
+    if filename.endswith( '.gif' ) and not ignoreGIF:
+        # find pngs from temporary folder
+        pngPaths = []
+        pngPaths.extend( glob.glob( os.path.join( pngDir, f"*.png" ) ) )
+        num_images = len( pngPaths )
+
+        # detect objects
+        for i, p in enumerate( pngPaths ):
+            logger.debug(f"Detecting {len(pngPaths)} images and saving them to {objDir}....")
+
+            # forward pass
+            im = getImage( p )
+            res = model.detect( [im], verbose = 0 )
+            r = res[0] 
+
+            # save results
+            objFilename = f"{i + 1}.npy"
+            np.save( os.path.join( objDir, objFilename ), r )
+
+    # transform image
+    else:
+        # find the image
+        preprocessedPath = os.path.join( pngDir, filename )
+        im = getImage( preprocessedPath )
+
+        # forward pass
+        res = model.detect( [im], verbose = 0 )
+        r = res[0] 
+
+        # save results
+        objFilename = f"0.npy"
+        np.save( os.path.join( objDir, objFilename ), r )
+        
+                    
 # runtime enterance
 if __name__ == '__main__':
-    detect()
+    main()
