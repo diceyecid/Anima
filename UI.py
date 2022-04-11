@@ -6,7 +6,7 @@ from PIL import Image
 from wx.lib.pubsub import pub 
 
 PhotoMaxSize = 600
-
+state = 1
 
 class DropTarget(wx.FileDropTarget):
     
@@ -70,6 +70,7 @@ class PhotoCtrl(wx.App):
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
 
+        self.output = wx.BoxSizer(wx.VERTICAL)
         self.mainSizer.Add(lbl, 0, wx.CENTER, 5)
         self.mainSizer.Add(choice, 0, wx.CENTER, 5)
         self.mainSizer.Add(wx.StaticLine(self.panel, wx.ID_ANY),
@@ -101,11 +102,14 @@ class PhotoCtrl(wx.App):
         dialog.Destroy() 
         self.on_view()
     
+
     def onRun(self, event):
         # script name start
         dirname = os.path.dirname(__file__)
         file = os.path.join(dirname, 'cartoonize.py')
         os.system('python3 ' + file)
+        
+
 
     def onChoice(self,event): 
         self.label.SetLabel("selected "+ self.choice.
