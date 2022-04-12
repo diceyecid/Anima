@@ -1,6 +1,7 @@
 # Data and output files
 *.h5
 output/
+thumbnail.png
 
 # macOS system file
 .DS_Store

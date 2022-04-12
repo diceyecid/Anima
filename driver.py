@@ -1,3 +1,10 @@
+####################
+# This file is entrance file to execute our method
+
+
+#---------- imports ----------#
+
+
 import os
 import sys
 import PIL
@@ -7,9 +14,9 @@ import logging
 import argparse
 from tqdm import tqdm
 from datetime import datetime
-from cartoonize import cartoonize as cartoonize
-from detect import detect as detect
-from enhance import enhance as enhance
+from cartoonize import main as cartoonize
+from detect import main as detect
+from enhance import main as enhance
 
 
 #---------- constants ----------# 

@@ -1,3 +1,7 @@
+####################
+# This file is use to interact with MaskRCNN module and retrieves object informaion.
+# It is adapted from the demo of originial MaskRCNN repository.
+
 import cv2
 import os
 import sys
@@ -98,42 +102,9 @@ def visualize( image, result ):
 
     return
 
+
 # main execution
-def main( inputPath = None ):
-    # define lists to contain images and prediction results
-    images = []
-    results = []
-
-    # get image 
-    logger.info( f'Retrieving image from `inputPath`' )
-    images.append( getImage( inputPath ) )
-
-    # initilize configuration and display it
-    config = InferenceConfig()
-
-    # initialize Mask R-CNN model for inference
-    logger.info( f'Loading Mask R-CNN model...' )
-    model = mModel.MaskRCNN( mode = 'inference', config = config, model_dir = os.getcwd() )
-
-    # load weight to model
-    logger.info( f'Loading pretrained COCO weights...' )
-    model.load_weights( filepath = 'mask_rcnn_coco.h5', by_name = True )
-
-    # forward pass
-    for im in images:
-        res = model.detect( [ im ], verbose = 0 )
-        results.append( res[0] )
-
-    # visualize results
-    # for im, r in zip( images, results ):
-        # visualize( im, r )
-
-    # save results
-    # np.save( 'test.npy', r )
-    return results
-
-
-def detect( imagePath, outputDir, ignoreGIF = False ):
+def main( imagePath, outputDir, ignoreGIF = False ):
     # initilize configuration and display it
     config = InferenceConfig()
 
@@ -192,8 +163,3 @@ def detect( imagePath, outputDir, ignoreGIF = False ):
         # save results
         objFilename = f"0.npy"
         np.save( os.path.join( objDir, objFilename ), r )
-        
-                    
-# runtime enterance
-if __name__ == '__main__':
-    main()

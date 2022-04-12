@@ -111,7 +111,7 @@ class Input(wx.Frame):
         # send message through pubsub
         pub.sendMessage("state", message = 'output')
         # run the backend code 
-        os.system('python3 driver.py --input ' + self.pathDir + ' --styles ' + self.style)
+        os.system('python3 driver.py --input ' + self.pathDir + ' --styles ' + self.style + ' --overwrite')
         # send message through pubsub and close current frame 
         pub.sendMessage("path", message = self.pathDir, arg2 = self.style)      
         self.frame.Close()

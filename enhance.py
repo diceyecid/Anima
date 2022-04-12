@@ -1,3 +1,8 @@
+####################
+# This file consist of different edge enhancement methods.
+# It serves as the edge enhancement componenet in our pipeline
+
+
 import numpy as np
 import cv2
 import os
@@ -140,7 +145,7 @@ def getEdge( obj, cartoon, method ):
 
 
 # enhance objects in cartoon image
-def enhance( imagePath, outputDir, edges, styles ):
+def main( imagePath, outputDir, edges, styles ):
     logger.info( f'Retrieving images...' )
 
     # get file name
@@ -205,46 +210,3 @@ def enhance( imagePath, outputDir, edges, styles ):
                     cv2.imwrite( os.path.join( enhancedDir, enhancedFilename ), enhancedImage )
 
     return
-
-
-
-def main():
-    objects = detect( IMAGE_PATH )
-    # r = np.load( 'test.npy', allow_pickle = True )[()]
-
-    image = cv2.imread( IMAGE_PATH )
-    cartoon = cv2.imread( CARTOON_PATH )
-    cartoon = cv2.resize( cartoon, image.shape[1::-1] )
-        
-    # edges
-    empty = np.ones( cartoon.shape[:2], np.uint8 )
-    canny = getCannyEdge( objects, cartoon )
-    morph = getMorphEdge( objects, cartoon )
-    adapt = getAdaptiveEdge( objects, cartoon )
-
-    # original with boxes
-    original = cartoon.copy()
-    for score, roi in zip( objects['scores'], objects['rois'] ):
-        if( score > 0.9 ):
-            original = cv2.rectangle( original, ( roi[1], roi[0] ), ( roi[3], roi[2] ), ( 0, 0, 255 ), 2 )
-
-    # edge enhancement applied
-    withCanny = cv2.bitwise_and( cartoon, cartoon, mask = 255 - canny )
-    withMorph = cv2.bitwise_and( cartoon, cartoon, mask = 255 - morph )
-    withAdapt = cv2.bitwise_and( cartoon, cartoon, mask = 255 - adapt )
-
-    # configure display
-    edges = np.concatenate( ( empty, canny, morph, adapt ), axis = 1 )
-    edges = cv2.cvtColor( edges, cv2.COLOR_GRAY2BGR )
-    out = np.concatenate( ( original, withCanny, withMorph, withAdapt ), axis = 1 )
-    disp = np.concatenate( ( edges, out ), axis = 0 )
-
-    # display
-    cv2.imshow( 'original vs morph vs canny vs adaptive', disp )
-    cv2.waitKey( 0 )
-    cv2.destroyAllWindows()
-
-
-
-if __name__ == '__main__':
-    main()

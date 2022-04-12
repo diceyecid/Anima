@@ -1,3 +1,7 @@
+####################
+# This file is use to interact with CartoonGAN module and produces cartoonized image.
+# It is adapted from the demo of originial CartoonGAN repository.
+
 import os
 import PIL
 import sys
@@ -293,100 +297,7 @@ def result_exist(image_path, style):
     return os.path.exists(os.path.join(args.output_dir, style, image_path.split(os.path.sep)[-1]))
 
 
-def main( funArgs = {} ):
-    start = datetime.now()
-
-    # handle arguments from function call
-    handle_args( funArgs )
-
-    logger.info(f"Transformed images will be saved to `{args.output_dir}` folder.")
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
-
-    # create temporary folder which will be deleted after transformations
-    if not os.path.exists(TEMPORARY_DIR):
-        os.makedirs(TEMPORARY_DIR)
-
-    # decide what styles to used in this execution
-    styles = STYLES if args.all_styles else args.styles
-    args.styles = styles
-
-    models = list()
-    for style in styles:
-        models.append(cartoongan.load_model(style))
-
-    logger.info(f"Cartoonizing images using {', '.join(styles)} style...")
-
-    image_paths = []
-    if os.path.isdir( args.input ):
-        for ext in VALID_EXTENSIONS:
-            image_paths.extend(glob.glob(os.path.join(args.input, f"*.{ext}")))
-        logger.info(f"Preparing to transform {len(image_paths)} images from `{args.input}` directory...")
-    else:
-        image_paths.append( args.input )
-        logger.info(f"Preparing to transform `{args.input}` file...")
-
-    progress_bar = tqdm(image_paths, desc='Transforming')
-    for image_path in progress_bar:
-        image_filename = image_path.split(os.path.sep)[-1]
-        progress_bar.set_postfix(File=image_filename)
-
-        if image_filename.endswith(".gif") and not args.ignore_gif:
-            png_paths = convert_gif_to_png(image_path)
-
-            png_paths_list = [png_paths]
-            num_images = len(png_paths)
-            for model, style in zip(models, styles):
-                return_existing_result = result_exist(image_path, style) or args.overwrite
-
-                transformed_png_paths = transform_png_images(png_paths, model, style,
-                                                             return_existing_result=return_existing_result)
-                png_paths_list.append(transformed_png_paths)
-
-                if not return_existing_result:
-                    gif_path = save_png_images_as_gif(transformed_png_paths, image_filename, style)
-                    if args.convert_gif_to_mp4:
-                        convert_gif_to_mp4(gif_path)
-
-            rearrange_paths_list = [[li[i] for li in png_paths_list] for i in range(num_images)]
-
-            save_dir = os.path.join(TEMPORARY_DIR, image_filename.replace(".gif", ""), "comparison")
-
-            combined_image_paths = list()
-            for image_paths in rearrange_paths_list:
-                path = save_concatenated_image(image_paths, image_folder=save_dir)
-                combined_image_paths.append(path)
-
-            if not args.skip_comparison:
-                gif_path = save_png_images_as_gif(combined_image_paths, image_filename)
-                if args.convert_gif_to_mp4:
-                    convert_gif_to_mp4(gif_path)
-
-        else:
-            related_image_paths = [image_path]
-            for model, style in zip(models, styles):
-                input_image = pre_processing(image_path, style=style)
-                save_dir = os.path.join(args.output_dir, style)
-                return_existing_result = result_exist(image_path, style) and not args.overwrite
-
-                if not return_existing_result:
-                    transformed_image = model.predict(input_image, use_multiprocessing=True)
-                    output_image = post_processing(transformed_image, style=style)
-                    transformed_image_path = save_transformed_image(output_image, image_filename, save_dir)
-                else:
-                    transformed_image_path = save_transformed_image(None, image_filename, save_dir)
-
-                related_image_paths.append(transformed_image_path)
-
-            if not args.skip_comparison:
-                save_concatenated_image(related_image_paths)
-    progress_bar.close()
-
-    time_elapsed = datetime.now() - start
-    logger.info(f"Total processing time: {time_elapsed}")
-
-
-def cartoonize( image_path, funArgs = {} ):
+def main( image_path, funArgs = {} ):
     handle_args( funArgs )
 
     logger.info( f"Intermediate cartoon images will be saved to `{args.output_dir}` folder.")
@@ -463,6 +374,3 @@ def cartoonize( image_path, funArgs = {} ):
 
         if not args.skip_comparison:
             save_concatenated_image(related_image_paths)
-
-if __name__ == "__main__":
-    main()
