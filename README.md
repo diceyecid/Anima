@@ -1,6 +1,14 @@
-# Object-Aware Cartoonization
+# Anima: Object-Aware Cartoonization
 
 An object-aware cartoonization method using CartoonGAN and Mask R-CNN.
+
+## Description
+
+We took inspiration from CartoonGAN which transforms images into Japanese anime
+style. It generates very pleasing scenery but presents objects too realistically.
+This is also the same case for a few of the other similar methods. So, we would
+like to propose an object-aware cartoonization method based on CartoonGAN with
+Mask R-CNN for object detection.
 
 ## Installation
 
@@ -22,36 +30,45 @@ An object-aware cartoonization method using CartoonGAN and Mask R-CNN.
 
 ## Usage
 
-### Object Detection
+### Windowed User Interface
 
-Use `detect.py` to perform object detection. To run a custom image,
-please supply an image path as argument like the example shown below:
+Use `UIControl.py` to initiate the application. It provides a simple interactive
+way to input and transform image, as well as visualizing input and output images
+side by side. However, it does not mirror all the functionalities of the command
+line interface.
 
 ```bash
-python detect.py ./input/default.jpg
+python UIControl.py
 ```
 
-### Cartoonization
+### Command Line Interface
 
-Use `cartoonize.py` to perform image cartoonization. By default, it will apply
-`shinkai` style transfer on images from `input` directory, the cartoonized images
-will be placed in `output` directory.
+Use `driver.py` to perform image cartoonization. By default, it will apply
+`shinkai` style transfer with `adaptive` edge enhancement on images from
+`input` directory, the cartoonized images will be placed in `output` directory.
 
-There are 4 styles available with CartoonGAN:
+There are 4 styles available (from CartoonGAN):
 
 - `shinkai`
 - `hayao`
 - `hosoda`
 - `paprika`
 
+There are 3 edge enhancement available:
+
+- `adaptive`
+- `canny`
+- `morph`
+
 There are many customization options available. As an example, the following
-command specified input and output directories and styles:
+command specified styles, edges, input image, and output directory:
 
 ```bash
-python cartoonize.py \
-	--input_dir input \
-	--output_dir output \
-	--styles shinkai hayao
+python driver.py \
+  --styles shinkai hayao \
+	--edges adaptive canny \
+	--input ./input/default.jpg \
+	--output_dir ./output
 ```
 
 To explore all available customization options, please use the following command
@@ -61,7 +78,19 @@ to get detailed explainations:
 python cartoonize.py --help
 ```
 
+## Sample Results
+
+For each set of results:
+- The top-left image is the original image
+- The top-right image is the result from CartoonGAN
+- The bottom-left image is the enhanced stroke mask
+- The bottom-right image is the result of our application
+
+![donuts-results](assets/donuts_results.png)
+![police-results](assets/police_results.png)
+![cat-in-bag-results](assets/cat_in_bag_results.png)
+
 ## Acknowledgement
 
-- [Mask R-CNN for Object Detection and Segmentation using TensorFlow 2.0](https://github.com/ahmedfgad/Mask-RCNN-TF2)
 - [CartoonGAN-TensorFlow2](https://github.com/mnicnc404/CartoonGan-tensorflow)
+- [Mask R-CNN for Object Detection and Segmentation using TensorFlow 2.0](https://github.com/ahmedfgad/Mask-RCNN-TF2)
