@@ -78,7 +78,7 @@ to get detailed explainations:
 python cartoonize.py --help
 ```
 
-## Sample Results
+## Results
 
 For each set of results:
 - The top-left image is the original image
@@ -87,7 +87,9 @@ For each set of results:
 - The bottom-right image is the result of our application
 
 ![donuts-results](assets/donuts_results.png)
+
 ![police-results](assets/police_results.png)
+
 ![cat-in-bag-results](assets/cat_in_bag_results.png)
 
 ## Acknowledgement
